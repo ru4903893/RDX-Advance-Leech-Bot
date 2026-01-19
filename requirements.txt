@@ -4,3 +4,8 @@ motor
 python-dotenv
 yt-dlp
 rclone-python
+pymongo
+aiohttp
+aria2p
+qbittorrent-api
+
