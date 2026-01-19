@@ -20,31 +20,3 @@ a powerful, RDX Leech BoT Telegram Leech &amp; Mirror Bot with a clean and cute 
 📊 Status / Queue / Cancel
 
 🧩 Heroku & VPS auto-detect
-
-🤖 Commands
-📥 Mirror / Leech
-
-/mirror        → Mirror to Google Drive
-/leech         → Leech to Telegram
-/qbleech       → Torrent leech (VPS only)
-/qbmirror      → Torrent mirror (VPS only)
-/ytdlmirror    → yt-dlp mirror
-/ytdlleech     → yt-dlp leech
-/usetting      → User settings (MongoDB)
-/bsetting      → Bot settings (Owner)
-/users         → User list (Owner)
-/status
-/cancel <gid>
-/cancelall
-/stats
-/log
-/restart
-
-🧾 Required Variables
-
-BOT_TOKEN
-OWNER_ID
-TELEGRAM_API
-TELEGRAM_HASH
-DATABASE_URL
-
