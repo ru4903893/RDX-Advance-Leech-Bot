@@ -6,7 +6,7 @@ from bot import app
 async def start(_, message):
 
     text = (
-        "✨ **Welcome to CandyCloud Mirror Bot** ☁️🍭\n\n"
+        "✨ **Welcome to RdX Leech Mirror Bot** ☁️🍭\n\n"
         "🚀 **What I Can Do For You:**\n"
         "• 📥 Mirror files to Google Drive\n"
         "• 📤 Leech files to Telegram\n"
