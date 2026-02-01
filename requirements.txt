@@ -1,11 +1,2 @@
-pyrogram
-tgcrypto
-motor
-python-dotenv
-yt-dlp
-rclone-python
-pymongo
-aiohttp
-aria2p
-qbittorrent-api
-
+python-telegram-bot==13.15
+requests==2.31.0
