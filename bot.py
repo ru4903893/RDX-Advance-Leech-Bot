@@ -1,12 +1,14 @@
 # ================== CONFIG (EDIT THIS ONLY) ==================
 import os
 
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-TMDB_API_KEY = os.getenv("TMDB_API_KEY")
-NETWORK_TAG = os.getenv("NETWORK_TAG", "@rdxmovie_hd")
+BOT_TOKEN = os.getenv("BOT_TOKEN")          # from Heroku Config Vars
+TMDB_API_KEY = os.getenv("TMDB_API_KEY")    # from Heroku Config Vars
+APP_URL = os.getenv("APP_URL")              # https://your-app.herokuapp.com
+NETWORK_TAG = "@rdxmovie_hd"
 
-# Comma-separated OMDB keys in env: OMDB_KEYS=key1,key2,key3
-OMDB_KEYS = [k.strip() for k in os.getenv("OMDB_KEYS", "ec03f6bd",
+# 🔑 All OMDB API Keys (hardcoded as requested)
+OMDB_KEYS = [
+    "ec03f6bd",
     "78aba0e3",
     "984f89be",
     "ce245f40",
@@ -14,10 +16,8 @@ OMDB_KEYS = [k.strip() for k in os.getenv("OMDB_KEYS", "ec03f6bd",
     "2451f643",
     "79803fd4",
     "f31bb8de",
-    "ae54521d").split(",") if k.strip()]
-
-# Your Heroku app base url, like: https://your-app-name.herokuapp.com
-APP_URL = os.getenv("APP_URL")  # REQUIRED for webhook
+    "ae54521d"
+]
 
 # ================== DO NOT EDIT BELOW ==================
 import requests
@@ -32,13 +32,18 @@ def tmdb_search(title, year=None):
     params = {"api_key": TMDB_API_KEY, "query": title}
     if year:
         params["year"] = year
-    r = requests.get("https://api.themoviedb.org/3/search/multi", params=params).json()
+    r = requests.get(
+        "https://api.themoviedb.org/3/search/multi",
+        params=params
+    ).json()
     return r.get("results", [None])[0]
 
 
 def tmdb_details(media_type, tmdb_id):
-    url = "https://api.themoviedb.org/3/{}/{}".format(media_type, tmdb_id)
-    return requests.get(url, params={"api_key": TMDB_API_KEY}).json()
+    return requests.get(
+        f"https://api.themoviedb.org/3/{media_type}/{tmdb_id}",
+        params={"api_key": TMDB_API_KEY}
+    ).json()
 
 
 def omdb_fetch(imdb_id):
@@ -68,6 +73,7 @@ def format_caption(tmdb, omdb):
     title = tmdb.get("title") or tmdb.get("name") or "N/A"
     released = tmdb.get("release_date") or tmdb.get("first_air_date") or "N/A"
     imdb = omdb.get("imdbRating", "N/A")
+
     rt = "00%"
     for r in omdb.get("Ratings", []):
         if "Rotten" in r.get("Source", ""):
@@ -77,25 +83,16 @@ def format_caption(tmdb, omdb):
     synopsis = shorten(tmdb.get("overview") or omdb.get("Plot"), 260)
 
     return (
-        "*{}* : {}\n\n"
+        f"*{title}* : {summary}\n\n"
         "*⟣────────────────────⟢*\n"
         "*‣ Audio ⌯[Hindi ]\n"
-        "‣ Rating ⌯ {} IMDB | {} RT\n"
+        f"‣ Rating ⌯ {imdb} IMDB | {rt} RT\n"
         "‣ Quality ⌯ 480p | 720p | 1080p\n"
-        "‣ Released On ⌯ {}\n"
-        "‣ Genres ⌯* {}\n"
+        f"‣ Released On ⌯ {released}\n"
+        f"‣ Genres ⌯* {hashtags(tmdb.get('genres', []))}\n"
         "*⟣────────────────────⟢*\n"
-        "*‣ Synopsis ⌯* *{}*\n\n"
-        "🔗*𝗢𝘂𝗿 𝗡𝗲𝘁𝘄𝗼𝗿𝗸* {}"
-    ).format(
-        title,
-        summary,
-        imdb,
-        rt,
-        released,
-        hashtags(tmdb.get("genres", [])),
-        synopsis,
-        NETWORK_TAG
+        f"*‣ Synopsis ⌯* *{synopsis}*\n\n"
+        f"🔗*𝗢𝘂𝗿 𝗡𝗲𝘁𝘄𝗼𝗿𝗸* {NETWORK_TAG}"
     )
 
 
@@ -123,43 +120,33 @@ def p_cmd(update, context):
         update.message.reply_text("Poster not available.")
         return
 
-    poster = TMDB_IMG + poster_path
-
     update.message.reply_photo(
-        photo=poster,
+        photo=TMDB_IMG + poster_path,
         caption=format_caption(tmdb, omdb),
         parse_mode="Markdown"
     )
 
 
 def main():
-    # --------- required env checks ----------
-    if not BOT_TOKEN:
-        raise RuntimeError("BOT_TOKEN missing (set in Heroku Config Vars).")
-    if not TMDB_API_KEY:
-        raise RuntimeError("TMDB_API_KEY missing (set in Heroku Config Vars).")
-    if not OMDB_KEYS:
-        raise RuntimeError("OMDB_KEYS missing (set in Heroku Config Vars).")
-    if not APP_URL:
-        raise RuntimeError("APP_URL missing (set in Heroku Config Vars).")
+    if not BOT_TOKEN or not TMDB_API_KEY or not APP_URL:
+        raise RuntimeError("Missing BOT_TOKEN / TMDB_API_KEY / APP_URL")
 
     updater = Updater(BOT_TOKEN, use_context=True)
     dp = updater.dispatcher
     dp.add_handler(CommandHandler("p", p_cmd))
 
-    # --------- webhook setup ----------
-    port = int(os.environ.get("PORT", "5000"))
-    # secret path (security): use token or any random string
-    url_path = BOT_TOKEN
+    port = int(os.environ.get("PORT", 5000))
+    secret_path = BOT_TOKEN  # webhook secret path
 
     updater.start_webhook(
         listen="0.0.0.0",
         port=port,
-        url_path=url_path,
-        webhook_url=f"{APP_URL}/{url_path}",
+        url_path=secret_path,
+        webhook_url=f"{APP_URL}/{secret_path}"
     )
+
     updater.idle()
 
 
-print("✅ Bot running (webhook)…")
+print("✅ Bot running (Webhook mode)…")
 main()
