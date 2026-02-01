@@ -1,12 +1,13 @@
 # ================== CONFIG (EDIT THIS ONLY) ==================
 import os
 
-BOT_TOKEN = os.getenv("BOT_TOKEN")          # from Heroku Config Vars
-TMDB_API_KEY = os.getenv("TMDB_API_KEY")    # from Heroku Config Vars
-APP_URL = os.getenv("APP_URL")              # https://your-app.herokuapp.com
+BOT_TOKEN = os.getenv("BOT_TOKEN")          # Heroku Config Vars
+TMDB_API_KEY = os.getenv("TMDB_API_KEY")    # Heroku Config Vars
+APP_URL = os.getenv("APP_URL")              # e.g. https://your-app.herokuapp.com
+
 NETWORK_TAG = "@rdxmovie_hd"
 
-# 🔑 All OMDB API Keys (hardcoded as requested)
+# ✅ All OMDB API Keys (hardcoded)
 OMDB_KEYS = [
     "ec03f6bd",
     "78aba0e3",
@@ -32,18 +33,13 @@ def tmdb_search(title, year=None):
     params = {"api_key": TMDB_API_KEY, "query": title}
     if year:
         params["year"] = year
-    r = requests.get(
-        "https://api.themoviedb.org/3/search/multi",
-        params=params
-    ).json()
+    r = requests.get("https://api.themoviedb.org/3/search/multi", params=params).json()
     return r.get("results", [None])[0]
 
 
 def tmdb_details(media_type, tmdb_id):
-    return requests.get(
-        f"https://api.themoviedb.org/3/{media_type}/{tmdb_id}",
-        params={"api_key": TMDB_API_KEY}
-    ).json()
+    url = f"https://api.themoviedb.org/3/{media_type}/{tmdb_id}"
+    return requests.get(url, params={"api_key": TMDB_API_KEY}).json()
 
 
 def omdb_fetch(imdb_id):
@@ -128,25 +124,32 @@ def p_cmd(update, context):
 
 
 def main():
-    if not BOT_TOKEN or not TMDB_API_KEY or not APP_URL:
-        raise RuntimeError("Missing BOT_TOKEN / TMDB_API_KEY / APP_URL")
+    # Required env checks
+    if not BOT_TOKEN:
+        raise RuntimeError("Missing BOT_TOKEN (set in Heroku Config Vars).")
+    if not TMDB_API_KEY:
+        raise RuntimeError("Missing TMDB_API_KEY (set in Heroku Config Vars).")
+    if not APP_URL:
+        raise RuntimeError("Missing APP_URL (set in Heroku Config Vars).")
 
     updater = Updater(BOT_TOKEN, use_context=True)
     dp = updater.dispatcher
     dp.add_handler(CommandHandler("p", p_cmd))
 
     port = int(os.environ.get("PORT", 5000))
-    secret_path = BOT_TOKEN  # webhook secret path
+
+    # Webhook secret path (better: use a separate secret, but token-path works)
+    secret_path = BOT_TOKEN
 
     updater.start_webhook(
         listen="0.0.0.0",
         port=port,
         url_path=secret_path,
-        webhook_url=f"{APP_URL}/{secret_path}"
+        webhook_url=f"{APP_URL}/{secret_path}",
     )
 
     updater.idle()
 
 
-print("✅ Bot running (Webhook mode)…")
+print("✅ Bot running (Webhook)…")
 main()
