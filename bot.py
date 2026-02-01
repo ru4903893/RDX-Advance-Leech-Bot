@@ -6,7 +6,15 @@ TMDB_API_KEY = os.getenv("TMDB_API_KEY")
 NETWORK_TAG = os.getenv("NETWORK_TAG", "@rdxmovie_hd")
 
 # Comma-separated OMDB keys in env: OMDB_KEYS=key1,key2,key3
-OMDB_KEYS = [k.strip() for k in os.getenv("OMDB_KEYS", "").split(",") if k.strip()]
+OMDB_KEYS = [k.strip() for k in os.getenv("OMDB_KEYS", "ec03f6bd",
+    "78aba0e3",
+    "984f89be",
+    "ce245f40",
+    "2e8c5c65",
+    "2451f643",
+    "79803fd4",
+    "f31bb8de",
+    "ae54521d").split(",") if k.strip()]
 
 # Your Heroku app base url, like: https://your-app-name.herokuapp.com
 APP_URL = os.getenv("APP_URL")  # REQUIRED for webhook
